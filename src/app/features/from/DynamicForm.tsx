@@ -11,6 +11,7 @@ const schema = z
 		}),
 		tin: z.string().optional().or(z.literal('')),
 		file: z.any().optional(),
+		date: z.string().optional(),
 	})
 	.superRefine((data, ctx) => {
 		if (data.category === 'Flagship' || data.category === 'Diamond') {
@@ -26,6 +27,13 @@ const schema = z
 					code: 'custom',
 					path: ['file'],
 					message: 'File is required',
+				});
+			}
+			if (!data.date || data.date.trim() === '') {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['date'],
+					message: 'Date is required',
 				});
 			}
 		}
@@ -45,6 +53,7 @@ const StaticForm = () => {
 			category: undefined,
 			tin: '',
 			file: null,
+			date: '',
 		},
 	});
 	const selectedCategory = watch('category');
@@ -54,6 +63,7 @@ const StaticForm = () => {
 			category: data.category,
 			tin: data.tin,
 			fileName: data.file?.name,
+			date: data.date,
 		});
 	};
 
@@ -93,7 +103,7 @@ const StaticForm = () => {
 				)}
 			</div>
 
-			{/* Show Tin/Bin and Filepath only for Flagship and Diamond */}
+			{/* Show Tin/Bin, Filepath, and DatePicker only for Flagship and Diamond */}
 			{(selectedCategory === 'Flagship' ||
 				selectedCategory === 'Diamond') && (
 				<>
@@ -140,6 +150,27 @@ const StaticForm = () => {
 								{typeof errors.file.message === 'string'
 									? errors.file.message
 									: null}
+							</p>
+						)}
+					</div>
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>
+							{selectedCategory} Date
+						</label>
+						<Controller
+							name='date'
+							control={control}
+							render={({ field }) => (
+								<input
+									type='date'
+									{...field}
+									className='block w-full px-3 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+								/>
+							)}
+						/>
+						{errors.date && (
+							<p className='mt-2 text-sm text-red-600'>
+								{errors.date.message}
 							</p>
 						)}
 					</div>
