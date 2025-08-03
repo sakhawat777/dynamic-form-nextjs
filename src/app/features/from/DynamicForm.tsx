@@ -16,14 +16,14 @@ const schema = z
 		if (data.category === 'Flagship' || data.category === 'Diamond') {
 			if (!data.tin || data.tin.trim() === '') {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: 'custom',
 					path: ['tin'],
 					message: 'Tin/Bin is required',
 				});
 			}
 			if (!data.file || !(data.file instanceof File)) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: 'custom',
 					path: ['file'],
 					message: 'File is required',
 				});
