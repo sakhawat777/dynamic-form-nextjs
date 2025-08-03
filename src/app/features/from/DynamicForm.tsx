@@ -4,18 +4,32 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 // Schema
-const schema = z.object({
-	category: z.enum(['Regular', 'Flagship', 'Diamond'], {
-		error: 'Please select a category',
-	}),
-	tin: z.string().min(1, 'Tin/Bin is required'),
-	file: z
-		.any()
-		.refine(
-			(file) => file instanceof File || (file && file.length > 0),
-			'File is required'
-		),
-});
+const schema = z
+	.object({
+		category: z.enum(['Regular', 'Flagship', 'Diamond'], {
+			error: 'Please select a category',
+		}),
+		tin: z.string().optional().or(z.literal('')),
+		file: z.any().optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.category === 'Flagship' || data.category === 'Diamond') {
+			if (!data.tin || data.tin.trim() === '') {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['tin'],
+					message: 'Tin/Bin is required',
+				});
+			}
+			if (!data.file || !(data.file instanceof File)) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ['file'],
+					message: 'File is required',
+				});
+			}
+		}
+	});
 
 type FormData = z.infer<typeof schema>;
 
@@ -23,6 +37,7 @@ const StaticForm = () => {
 	const {
 		control,
 		handleSubmit,
+		watch,
 		formState: { errors },
 	} = useForm<FormData>({
 		resolver: zodResolver(schema),
@@ -32,6 +47,7 @@ const StaticForm = () => {
 			file: null,
 		},
 	});
+	const selectedCategory = watch('category');
 
 	const onSubmit = (data: FormData) => {
 		console.log('Submitted data:', {
@@ -77,53 +93,58 @@ const StaticForm = () => {
 				)}
 			</div>
 
-			{/* Tin/Bin input (child of category) */}
-			<div>
-				<label className='block text-sm font-medium text-gray-700'>
-					Tin/Bin
-				</label>
-				<Controller
-					name='tin'
-					control={control}
-					render={({ field }) => (
-						<input
-							{...field}
-							className='block w-full px-3 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+			{/* Show Tin/Bin and Filepath only for Flagship and Diamond */}
+			{(selectedCategory === 'Flagship' ||
+				selectedCategory === 'Diamond') && (
+				<>
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>
+							{selectedCategory} Tin/Bin
+						</label>
+						<Controller
+							name='tin'
+							control={control}
+							render={({ field }) => (
+								<input
+									{...field}
+									className='block w-full px-3 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+								/>
+							)}
 						/>
-					)}
-				/>
-				{errors.tin && (
-					<p className='mt-2 text-sm text-red-600'>{errors.tin.message}</p>
-				)}
-			</div>
-
-			{/* File input */}
-			<div>
-				<label className='block text-sm font-medium text-gray-700'>
-					Filepath
-				</label>
-				<Controller
-					name='file'
-					control={control}
-					render={({ field }) => (
-						<input
-							type='file'
-							onChange={(e) => {
-								const file = e.target.files?.[0] ?? null;
-								field.onChange(file);
-							}}
-							className='block w-full mt-1 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
+						{errors.tin && (
+							<p className='mt-2 text-sm text-red-600'>
+								{errors.tin.message}
+							</p>
+						)}
+					</div>
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>
+							{selectedCategory} Filepath
+						</label>
+						<Controller
+							name='file'
+							control={control}
+							render={({ field }) => (
+								<input
+									type='file'
+									onChange={(e) => {
+										const file = e.target.files?.[0] ?? null;
+										field.onChange(file);
+									}}
+									className='block w-full mt-1 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
+								/>
+							)}
 						/>
-					)}
-				/>
-				{errors.file && (
-					<p className='mt-2 text-sm text-red-600'>
-						{typeof errors.file.message === 'string'
-							? errors.file.message
-							: null}
-					</p>
-				)}
-			</div>
+						{errors.file && (
+							<p className='mt-2 text-sm text-red-600'>
+								{typeof errors.file.message === 'string'
+									? errors.file.message
+									: null}
+							</p>
+						)}
+					</div>
+				</>
+			)}
 
 			{/* Submit Button */}
 			<button
