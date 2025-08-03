@@ -59,12 +59,18 @@ const StaticForm = () => {
 	const selectedCategory = watch('category');
 
 	const onSubmit = (data: FormData) => {
-		console.log('Submitted data:', {
-			category: data.category,
-			tin: data.tin,
-			fileName: data.file?.name,
-			date: data.date,
-		});
+		if (data.category === 'Regular') {
+			console.log('Submitted data:', {
+				category: data.category,
+			});
+		} else {
+			console.log('Submitted data:', {
+				category: data.category,
+				tin: data.tin,
+				fileName: data.file?.name,
+				date: data.date,
+			});
+		}
 	};
 
 	return (
