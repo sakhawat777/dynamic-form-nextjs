@@ -1,9 +1,10 @@
-import DynamicForm from './features/from/DynamicForm';
+import StaticForm from './features/from/StaticForm';
+
 
 export default function Home() {
 	return (
 		<div>
-			<DynamicForm />
+			<StaticForm />
 		</div>
 	);
 }
