@@ -12,6 +12,14 @@ const schema = z
 		tin: z.string().optional().or(z.literal('')),
 		file: z.any().optional(),
 		date: z.string().optional(),
+
+		// Flagship Certificate
+		flagshipCert: z.any().optional(),
+		flagshipCertDate: z.string().optional(),
+
+		// Diamond Certificate
+		diamondCert: z.any().optional(),
+		diamondCertDate: z.string().optional(),
 	})
 	.superRefine((data, ctx) => {
 		if (data.category === 'Flagship' || data.category === 'Diamond') {
@@ -36,6 +44,36 @@ const schema = z
 					message: 'Date is required',
 				});
 			}
+			if (!data.flagshipCert || !(data.flagshipCert instanceof File)) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['flagshipCert'],
+					message: 'Flagship Certificate is required',
+				});
+			}
+			if (!data.flagshipCertDate || data.flagshipCertDate.trim() === '') {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['flagshipCertDate'],
+					message: 'Flagship Certificate Date is required',
+				});
+			}
+		}
+		if (data.category === 'Diamond') {
+			if (!data.diamondCert || !(data.diamondCert instanceof File)) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['diamondCert'],
+					message: 'Diamond Certificate is required',
+				});
+			}
+			if (!data.diamondCertDate || data.diamondCertDate.trim() === '') {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['diamondCertDate'],
+					message: 'Diamond Certificate Date is required',
+				});
+			}
 		}
 	});
 
@@ -54,23 +92,24 @@ const StaticForm = () => {
 			tin: '',
 			file: null,
 			date: '',
+			flagshipCert: null,
+			flagshipCertDate: '',
+			diamondCert: null,
+			diamondCertDate: '',
 		},
 	});
+
 	const selectedCategory = watch('category');
 
 	const onSubmit = (data: FormData) => {
-		if (data.category === 'Regular') {
-			console.log('Submitted data:', {
-				category: data.category,
-			});
-		} else {
-			console.log('Submitted data:', {
-				category: data.category,
-				tin: data.tin,
-				fileName: data.file?.name,
-				date: data.date,
-			});
-		}
+		console.log('Submitted data:', {
+			...data,
+			fileName: data.file instanceof File ? data.file.name : null,
+			flagshipCertName:
+				data.flagshipCert instanceof File ? data.flagshipCert.name : null,
+			diamondCertName:
+				data.diamondCert instanceof File ? data.diamondCert.name : null,
+		});
 	};
 
 	return (
@@ -109,13 +148,14 @@ const StaticForm = () => {
 				)}
 			</div>
 
-			{/* Show Tin/Bin, Filepath, and DatePicker only for Flagship and Diamond */}
+			{/* Shared Fields for Flagship and Diamond */}
 			{(selectedCategory === 'Flagship' ||
 				selectedCategory === 'Diamond') && (
 				<>
+					{/* Tin */}
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>
-							{selectedCategory} Tin/Bin
+							Tin/Bin
 						</label>
 						<Controller
 							name='tin'
@@ -133,9 +173,11 @@ const StaticForm = () => {
 							</p>
 						)}
 					</div>
+
+					{/* File */}
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>
-							{selectedCategory} Filepath
+							File Path
 						</label>
 						<Controller
 							name='file'
@@ -143,25 +185,24 @@ const StaticForm = () => {
 							render={({ field }) => (
 								<input
 									type='file'
-									onChange={(e) => {
-										const file = e.target.files?.[0] ?? null;
-										field.onChange(file);
-									}}
+									onChange={(e) =>
+										field.onChange(e.target.files?.[0] ?? null)
+									}
 									className='block w-full mt-1 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
 								/>
 							)}
 						/>
 						{errors.file && (
 							<p className='mt-2 text-sm text-red-600'>
-								{typeof errors.file.message === 'string'
-									? errors.file.message
-									: null}
+								{typeof errors.file?.message === 'string' ? errors.file.message : null}
 							</p>
 						)}
 					</div>
+
+					{/* Date */}
 					<div>
 						<label className='block text-sm font-medium text-gray-700'>
-							{selectedCategory} Date
+							Date
 						</label>
 						<Controller
 							name='date'
@@ -177,6 +218,105 @@ const StaticForm = () => {
 						{errors.date && (
 							<p className='mt-2 text-sm text-red-600'>
 								{errors.date.message}
+							</p>
+						)}
+					</div>
+
+					{/* Flagship Certificate */}
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>
+							Flagship Certificate
+						</label>
+						<Controller
+							name='flagshipCert'
+							control={control}
+							render={({ field }) => (
+								<input
+									type='file'
+									onChange={(e) =>
+										field.onChange(e.target.files?.[0] ?? null)
+									}
+									className='block w-full mt-1 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
+								/>
+							)}
+						/>
+						{errors.flagshipCert && (
+							<p className='mt-2 text-sm text-red-600'>
+								{typeof errors.flagshipCert?.message === 'string' ? errors.flagshipCert.message : null}
+							</p>
+						)}
+					</div>
+
+					{/* Flagship Certificate Date */}
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>
+							Flagship Certificate Date
+						</label>
+						<Controller
+							name='flagshipCertDate'
+							control={control}
+							render={({ field }) => (
+								<input
+									type='date'
+									{...field}
+									className='block w-full px-3 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+								/>
+							)}
+						/>
+						{errors.flagshipCertDate && (
+							<p className='mt-2 text-sm text-red-600'>
+								{errors.flagshipCertDate.message}
+							</p>
+						)}
+					</div>
+				</>
+			)}
+
+			{/* Diamond-specific certificate */}
+			{selectedCategory === 'Diamond' && (
+				<>
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>
+							Diamond Certificate
+						</label>
+						<Controller
+							name='diamondCert'
+							control={control}
+							render={({ field }) => (
+								<input
+									type='file'
+									onChange={(e) =>
+										field.onChange(e.target.files?.[0] ?? null)
+									}
+									className='block w-full mt-1 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
+								/>
+							)}
+						/>
+						{errors.diamondCert && (
+							<p className='mt-2 text-sm text-red-600'>
+								{typeof errors.diamondCert?.message === 'string' ? errors.diamondCert.message : null}
+							</p>
+						)}
+					</div>
+
+					<div>
+						<label className='block text-sm font-medium text-gray-700'>
+							Diamond Certificate Date
+						</label>
+						<Controller
+							name='diamondCertDate'
+							control={control}
+							render={({ field }) => (
+								<input
+									type='date'
+									{...field}
+									className='block w-full px-3 py-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+								/>
+							)}
+						/>
+						{errors.diamondCertDate && (
+							<p className='mt-2 text-sm text-red-600'>
+								{errors.diamondCertDate.message}
 							</p>
 						)}
 					</div>
